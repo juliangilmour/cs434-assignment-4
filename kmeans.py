@@ -16,7 +16,7 @@ def toyProblem():
   # Apply kMeans with visualization on
   k = 3
   max_iters=20
-  centroids, assignments, SSE = kMeansClustering(X, k=k, max_iters=max_iters, visualize=True)
+  centroids, assignments, SSE = kMeansClustering(X, k=k, max_iters=max_iters, visualize=False)
   plotClustering(centroids, assignments, X, title="Final Clustering")
   
   # Print a plot of the SSE over training
@@ -37,7 +37,9 @@ def toyProblem():
   SSE_rand = []
   # Run the clustering with k=5 and max_iters=20 fifty times and 
   # store the final sum-of-squared-error for each run in the list SSE_rand.
-  raise Exception('Student error: You haven\'t implemented the randomness experiment for Q5.')
+  for _ in range(50):
+    centroids, assignments, SSE = kMeansClustering(X, k=k, max_iters=max_iters, visualize=False)
+    SSE_rand.append(SSE[-1])
   
 
   # Plot error distribution
@@ -54,8 +56,9 @@ def toyProblem():
   SSE_vs_k = []
   # Run the clustering max_iters=20 for k in the range 1 to 150 and 
   # store the final sum-of-squared-error for each run in the list SSE_vs_k.
-  raise Exception('Student error: You haven\'t implemented the randomness experiment for Q5.')
-
+  for k in range(1,150):
+    centroids, assignments, SSE = kMeansClustering(X, k=k, max_iters=20, visualize=False)
+    SSE_vs_k.append(SSE[-1])
   # Plot how SSE changes as k increases
   plt.figure(figsize=(16,8))
   plt.plot(SSE_vs_k, marker="o")
@@ -74,28 +77,27 @@ def imageProblem():
   # Perform k-means clustering
   k=10
   centroids, assignments, SSE = kMeansClustering(img_feats, k, 30, min_size=0)
-
+  print (SSE[-1])
   # Visualize Clusters
   for c in range(len(centroids)):
     # Get images in this cluster
-    members = np.where(assignments==c)[0].astype(np.int)
+    members = np.where(assignments==c)[0].astype(int)
     imgs = data[np.random.choice(members,min(50, len(members)), replace=False),:,:]
     
     # Build plot with 50 samples
     print("Cluster "+str(c) + " ["+str(len(members))+"]")
-    _, axs = plt.subplots(5, 10, figsize=(16, 8))
-    axs = axs.flatten()
-    for img, ax in zip(imgs, axs):
-        ax.imshow(img,plt.cm.gray)
-        ax.axes.xaxis.set_visible(False)
-        ax.axes.yaxis.set_visible(False)
+    # _, axs = plt.subplots(5, 10, figsize=(16, 8))
+    # axs = axs.flatten()
+    # for img, ax in zip(imgs, axs):
+    #     ax.imshow(img,plt.cm.gray)
+    #     ax.axes.xaxis.set_visible(False)
+    #     ax.axes.yaxis.set_visible(False)
 
-    # Fill out plot with whitespace if there arent 50 in the cluster
-    for i in range(len(imgs), 50):
-      axs[i].axes.xaxis.set_visible(False)
-      axs[i].axes.yaxis.set_visible(False)
-    plt.show()
-
+    # # Fill out plot with whitespace if there arent 50 in the cluster
+    # for i in range(len(imgs), 50):
+    #   axs[i].axes.xaxis.set_visible(False)
+    #   axs[i].axes.yaxis.set_visible(False)
+    # plt.show()
 
 
 ##########################################################
@@ -112,8 +114,7 @@ def imageProblem():
 ##########################################################
 
 def initalizeCentroids(dataset, k):
-  raise Exception('Student error: You haven\'t implemented initializeCentroids yet.')
-  return centroids
+  return dataset[np.random.choice(dataset.shape[0], size=k, replace=False)]
 
 ##########################################################
 # computeAssignments
@@ -131,8 +132,12 @@ def initalizeCentroids(dataset, k):
 ##########################################################
 
 def computeAssignments(dataset, centroids):
-  raise Exception('Student error: You haven\'t implemented computeAssignments yet.')
-  return assignments
+  distances = np.zeros((dataset.shape[0], centroids.shape[0]))
+  for i in range(len(centroids)):
+    distances[:,i] = np.linalg.norm(dataset - centroids[i], axis=1)
+  # [np.linalg.norm(dataset-centroid, axis=1) for centroid in centroids]
+  return np.argmin(distances, axis=1)
+  
 
 ##########################################################
 # updateCentroids
@@ -154,9 +159,13 @@ def computeAssignments(dataset, centroids):
 ##########################################################
 
 def updateCentroids(dataset, centroids, assignments):
-  raise Exception('Student error: You haven\'t implemented updateCentroids yet.')
+  counts = np.zeros((centroids.shape[0], 1))
+  for centroid in range(len(centroids)):
+    slice = dataset[assignments == centroid]
+    counts[centroid] = slice.shape[0]
+    centroids[centroid] = np.mean(slice, axis=0)
+
   return centroids, counts
-  
 
 ##########################################################
 # calculateSSE
@@ -174,9 +183,9 @@ def updateCentroids(dataset, centroids, assignments):
 ##########################################################
 
 def calculateSSE(dataset, centroids, assignments):
-  raise Exception('Student error: You haven\'t implemented calculateSSE yet.')
+  for centroid in range(len(centroids)):
+    sse = np.sum(np.linalg.norm(dataset[assignments == centroid] - centroids[centroid], axis=1))
   return sse
-  
 
 ########################################
 # Instructor Code: Don't need to modify 
@@ -197,7 +206,7 @@ def kMeansClustering(dataset, k, max_iters=10, min_size=0, visualize=False):
     # Update Assignments Step
     assignments = computeAssignments(dataset, centroids)
     
-    # Update Centroids Step
+    # Update Centroids Step/v 3`6 03. `
     centroids, counts = updateCentroids(dataset, centroids, assignments)
 
     # Re-initalize any cluster with fewer then min_size points
@@ -225,5 +234,5 @@ def plotClustering(centroids, assignments, dataset, title=None):
 
 
 if __name__=="__main__":
-  toyProblem()
+  # toyProblem()
   imageProblem()
